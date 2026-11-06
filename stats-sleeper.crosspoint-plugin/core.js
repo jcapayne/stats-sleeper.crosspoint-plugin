@@ -87,15 +87,15 @@
       const names = new Set(files.filter(f => !f.isDirectory).map(f => '/' + f.name));
       const candidates = cfg.mode === 'overlay' ? ['/sleep-overlay.bmp', '/sleep-overlay.png'] : ['/sleep.bmp'];
       const existing = candidates.filter(p => names.has(p));
-      const owned = p => prior && prior.managed_dest === p && prior.dest === p;
-      if (existing.some(p => !owned(p)) && !replace) throw new Error('Existing sleep image found. Select the explicit replace option to preserve it as a backup and continue.');
+      if (existing.length && !replace) throw new Error('Existing sleep image found. Select the explicit replace option to preserve it as a backup and continue.');
       const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
       const pending = '/stats-sleeper-pending-' + id + (cfg.mode === 'overlay' ? '.png' : '.bmp');
-      const moves = existing.map(path => ({ path, backup: '/stats-sleeper-original-' + id + '-' + path.slice(1), owned: owned(path) }));
+      const moves = existing.map(path => ({ path, backup: '/stats-sleeper-original-' + id + '-' + path.slice(1) }));
       let oldBackups = [];
       try { oldBackups = JSON.parse(prior && prior.backup_paths || '[]'); } catch { /* recover with current backups */ }
       if (!Array.isArray(oldBackups) || oldBackups.some(p => typeof p !== 'string' || !/^\/stats-sleeper-original-[A-Za-z0-9.-]+$/.test(p))) throw new Error('Invalid backup records in configuration.');
-      cfg.backup_paths = JSON.stringify([...oldBackups, ...moves.filter(m => !m.owned).map(m => m.backup)]);
+      // Keep bounded records, but never delete older backup files from the card.
+      cfg.backup_paths = JSON.stringify([...oldBackups, ...moves.map(m => m.backup)].slice(-6));
       encodeConfig(cfg);
       const moved = [];
       let imageInstalled = false, configAttempted = false;
@@ -120,14 +120,11 @@
         if (recovery.length) throw new Error('Setup failed; recovery needs attention: ' + recovery.join(', ') + '. Backups were retained.');
         throw error;
       }
-      for (const move of moves.filter(m => m.owned)) {
-        try { await form('/delete', { path: move.backup }); } catch { /* keep a safe extra copy if cleanup fails */ }
-      }
       return cfg;
     }
     return {
       load: () => readJson('config.json'), connection: input => connection(buildConfig(input)), save,
-      preview: async input => { const cfg = buildConfig(input); const suffix = '?' + new URL(cfg.image_url).searchParams; return (await binary(cfg, suffix)).blob(); },
+      preview: async input => { const cfg = buildConfig(input); const query = new URL(cfg.image_url).searchParams; query.set('preview', '1'); return (await binary(cfg, '?' + query)).blob(); },
       upload: async (input, blob) => { const cfg = buildConfig(input); return (await binary(cfg, '/background', { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: blob })).json(); },
       removeBackground: async input => { const cfg = buildConfig(input); return (await binary(cfg, '/background', { method: 'DELETE' })).json(); },
     };

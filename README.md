@@ -22,6 +22,12 @@ npm test
 npm run validate
 ```
 
+After building the companion server, include the integration test against its real routes with:
+
+```sh
+STATS_SLEEPER_SYNC_WORKTREE=.worktrees/crosspoint-sync npm test
+```
+
 From the companion sync worktree:
 
 ```sh

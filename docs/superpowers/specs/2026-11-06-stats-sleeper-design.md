@@ -1,7 +1,7 @@
 # Stats Sleeper design
 
 Date: 2026-11-06
-Status: Proposed for approval
+Status: Approved; implemented in the local plugin and companion server branches
 
 ## Intent and agreed scope
 

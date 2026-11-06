@@ -15,7 +15,7 @@ Your reading year on your CrossPoint sleep screen: books finished, annual goal p
 3. Enter the actual screen width and height. The initial 480×800 values are defaults, not hardware detection. Choose your timezone, metrics, and panel position.
 4. Test the connection and preview. Annual goals come from your account's existing goal settings. Without a goal, the goal bar and celebration are hidden.
 5. For Custom wallpapers, optionally upload PNG, JPEG, or WebP artwork. The browser converts and resizes it before storing it on your sync account. The plain-background button removes that account background for all its readers.
-6. Select the explicit replacement checkbox if you already have a sleep image. Save, refresh & enable preserves the original as a root-level `stats-sleeper-original-…` backup and activates native sleep refresh.
+6. Select the explicit replacement checkbox if you already have a sleep image, including a previously generated one. Save, refresh & enable preserves the displaced file as a root-level `stats-sleeper-original-…` backup and activates native sleep refresh. This protects originals you may have manually restored since the previous setup.
 7. Choose the matching sleep mode on the reader. The plugin does not change this setting for you.
 
 The authentication key is the lowercase 32-character MD5 of your sync password, matching the KOSync protocol. Calculate it locally without putting the password in command history, for example:
@@ -30,7 +30,7 @@ Treat the resulting key like your password. It is saved in `config.json` on the 
 
 - **Cover + Transparent:** recommended. The transparent PNG panel overlays the current cover.
 - **Transparent:** the same panel overlays the retained screen/page.
-- **Custom:** a complete BMP wallpaper composites the stats onto the account background (or a plain light background).
+- **Custom:** a complete BMP wallpaper composites the stats onto the account background (or a plain light background). It uses the firmware's native four gray shades and, at the configured screen size, bypasses its conversion cache. Browser previews use PNG because the native 2-bit BMP is reader-specific.
 - **Cover + Custom:** firmware shows the generated wallpaper on its custom branch; sleeping from a book shows its cover alone. It does not overlay stats on that cover.
 
 Current-book percentage comes directly from the reader when sleeping from a book. It is omitted when unavailable, including in the browser preview. It never changes sync progress or marks a book complete. Annual totals reflect what has actually reached the sync server, so an unsynced completion may appear on a later refresh. The goal celebration stays visible while the current year's goal is met or exceeded.
@@ -43,6 +43,8 @@ The root files `/sleep-overlay.png` and `/sleep.bmp` take priority over wallpape
 
 After **every plugin update**, open setup and choose **Save, refresh & enable** again. Your `config.json` is retained, but the shipped `device.json` is deliberately inactive until setup reapplies the handler. This avoids enabling network activity before the first setup.
 
-To stop automatic refresh, uninstall the plugin or replace its `device.json` with the inactive version from the release. To restore artwork, first stop the handler, move the generated root image aside with File Manager, then rename the desired `stats-sleeper-original-…` backup to its original filename. Restore an original overlay BMP as well if one existed. Original backup names are displayed after saving and recorded in `config.json`. Uploaded account backgrounds remain on the server until removed in setup or the account's reading data/account is deleted.
+To stop automatic refresh, uninstall the plugin or replace its `device.json` with the inactive version from the release. To restore artwork, first stop the handler, move the generated root image aside with File Manager, then rename the desired `stats-sleeper-original-…` backup to its original filename. Restore an original overlay BMP as well if one existed. The six most recent backup names are displayed after saving and recorded in `config.json`; older backup files remain on the SD card and are never automatically deleted. Uploaded account backgrounds remain on the server until removed in setup or the account's reading data/account is deleted.
+
+Known limitation: if setup fails after staging a downloaded image, a root-level `stats-sleeper-pending-…` image may remain. It is safe to remove that pending image in File Manager after setup has stopped. It is separate from your original-artwork backups.
 
 Browser preview and background upload require browser access to the sync server and its API CORS support. HTTPS pages cannot contact plain HTTP servers in many browsers. Native sleep downloads use the reader's network connection instead. Server redirects are rejected for browser requests; configure the final URL.

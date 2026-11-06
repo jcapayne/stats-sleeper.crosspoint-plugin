@@ -99,14 +99,27 @@ test('a config activation failure restores original artwork and disables the han
   assert.equal(device.events, undefined);
 });
 
-test('reapplying a saved configuration preserves original backups and cleans temporary images', async () => {
+test('reapplying requires explicit replacement and retains every displaced image', async () => {
   const f = fixture({ existing: ['sleep-overlay.png'] });
   const first = await f.controller.save(input, true);
-  const second = await f.controller.save(input, false);
-  assert.equal(second.backup_paths, first.backup_paths);
+  await assert.rejects(f.controller.save(input, false), /replace|existing/i);
+  const second = await f.controller.save(input, true);
+  assert.equal(JSON.parse(first.backup_paths).length, 1);
+  assert.equal(JSON.parse(second.backup_paths).length, 2);
   assert.equal(f.files.get('/sleep-overlay.png'), 'new image');
-  assert.equal([...f.files.keys()].filter(p => p.startsWith('/stats-sleeper-original-')).length, 1);
+  assert.equal([...f.files.keys()].filter(p => p.startsWith('/stats-sleeper-original-')).length, 2);
   assert.equal([...f.files.keys()].filter(p => p.startsWith('/stats-sleeper-pending-')).length, 0);
+});
+
+test('restored user artwork is never assumed to belong to the plugin', async () => {
+  const f = fixture({ existing: ['sleep-overlay.png'] });
+  const cfg = await f.controller.save(input, true);
+  const originalBackup = JSON.parse(cfg.backup_paths)[0];
+  f.files.set('/sleep-overlay.png', f.files.get(originalBackup));
+  f.files.delete(originalBackup);
+  await assert.rejects(f.controller.save(input, false), /replace|existing/i);
+  await f.controller.save(input, true);
+  assert.ok([...f.files.values()].includes('original'), 'restored original must remain in a backup');
 });
 
 test('unsupported servers and rejected auth cannot overwrite configuration', async () => {
