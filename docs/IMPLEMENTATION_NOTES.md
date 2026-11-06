@@ -39,3 +39,12 @@ A short-landscape clipping regression was also reproduced and corrected by bound
 ## Deferred minor
 
 A setup failure after successfully staging an image can leave a root-level `stats-sleeper-pending-…` file. Original-artwork backups remain safe. The installed README explains how to remove that pending file in File Manager; automatic cleanup is deferred.
+
+## Local-testing follow-ups
+
+- Fixed the inherited `0044` → `0048` reading-goals migration rename compatibility, preserving existing goals and refusing unexpected schemas. The original failure was reproduced before the repair. The server remains on `codex/stats-sleeper`.
+- Added the user-selected journal treatments to both modes: bundled licensed Lora serif fonts, rounded fine borders, numeric columns, and an annual-goal seal tilted ten degrees across the border. Custom frames uploaded artwork or an original open-book illustration; compact/landscape mode stays in bounds. The reference image was not copied into any runtime asset.
+- Rendering remains pure JavaScript with no native font/graphics dependencies or runtime font downloads. The source and compiled builds resolve the same bundled font paths. Font licenses ship with the server assets.
+- Updated verification: 75 server files / 1,041 tests pass, plus 12 plugin tests including real service integration, TypeScript build, manifest validator, and whitespace checks. A fresh review reran the renderer/layout tests and swept supported dimensions/placements without finding overflow.
+- Built local Docker image `crosspoint-sync:stats-sleeper-journal`; isolated read-only/no-network container renders at 1200×1600 produced an 86,052-byte overlay PNG and a 480,070-byte native 2-bit BMP. No existing container, volume, or running service was changed.
+- Preview examples use sample account data and original geometric sample artwork. Regenerate them with `node tools/render-journal-previews.mjs` after building the companion server.

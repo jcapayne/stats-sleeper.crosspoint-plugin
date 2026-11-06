@@ -28,9 +28,9 @@ Treat the resulting key like your password. It is saved in `config.json` on the 
 
 ## Sleep modes
 
-- **Cover + Transparent:** recommended. The transparent PNG panel overlays the current cover.
+- **Cover + Transparent:** recommended. A compact journal-style bookplate overlays the current cover, with serif type, numeric columns, and a slightly tilted annual-goal seal crossing its border.
 - **Transparent:** the same panel overlays the retained screen/page.
-- **Custom:** a complete BMP wallpaper composites the stats onto the account background (or a plain light background). It uses the firmware's native four gray shades and, at the configured screen size, bypasses its conversion cache. Browser previews use PNG because the native 2-bit BMP is reader-specific.
+- **Custom:** a full-page journal composition puts uploaded artwork in a frame above the matching bookplate. With no uploaded artwork, it uses an original open-book line illustration. Compact layouts are used for short/landscape screens. It uses the firmware's native four gray shades and, at the configured screen size, bypasses its conversion cache. Browser previews use PNG because the native 2-bit BMP is reader-specific.
 - **Cover + Custom:** firmware shows the generated wallpaper on its custom branch; sleeping from a book shows its cover alone. It does not overlay stats on that cover.
 
 Current-book percentage comes directly from the reader when sleeping from a book. It is omitted when unavailable, including in the browser preview. It never changes sync progress or marks a book complete. Annual totals reflect what has actually reached the sync server, so an unsynced completion may appear on a later refresh. The goal celebration stays visible while the current year's goal is met or exceeded.

@@ -4,6 +4,8 @@ A native-plugin sleep-image overlay backed by crosspoint-sync. The sync service 
 
 The plugin supports Cover + Transparent overlays and complete Custom wallpapers. It shows books finished this year, the existing annual goal, goal celebrations, current-book percentage, and reading streaks. See [the installable guide](stats-sleeper.crosspoint-plugin/README.md) for setup, credentials, supported sleep modes, offline behavior, and artwork restoration.
 
+Both modes now use a reading-journal visual treatment: serif typography, fine borders, numeric columns, and a goal seal tilted across the bookplate. Custom includes framed artwork or an original line illustration. The image API parameters are unchanged.
+
 ## Status and installation
 
 Version `0.1.0` is local development work, not a published Plugin Hub release. The corresponding server branch is `codex/stats-sleeper` in the isolated crosspoint-sync worktree at `.worktrees/crosspoint-sync`, based on upstream `e7ace2c2c1e04a18bb622b0739a04f15c35af6e0`. Nothing has been deployed to `sync.crosspointreader.com`.
@@ -26,6 +28,12 @@ After building the companion server, include the integration test against its re
 
 ```sh
 STATS_SLEEPER_SYNC_WORKTREE=.worktrees/crosspoint-sync npm test
+```
+
+Regenerate the sample journal previews after building the server:
+
+```sh
+node tools/render-journal-previews.mjs
 ```
 
 From the companion sync worktree:
