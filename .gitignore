@@ -1,0 +1,6 @@
+.worktrees/
+.superpowers/
+node_modules/
+artifacts/
+.DS_Store
+stats-sleeper.crosspoint-plugin/config.json

@@ -1,0 +1,9 @@
+{
+  "name": "stats-sleeper",
+  "title": "Stats Sleeper",
+  "description": "Reading stats, annual goals, and celebrations on your sleep screen.",
+  "author": "jcapayne",
+  "version": "0.1.0",
+  "mount": "settings",
+  "files": ["manifest.json", "device.json", "plugin.js", "core.js", "README.md"]
+}
