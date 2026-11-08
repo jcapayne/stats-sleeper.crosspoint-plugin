@@ -6,14 +6,39 @@
   'use strict';
   const METRICS = ['books', 'goal', 'current', 'streak'];
   const INERT = { title: 'Stats Sleeper', config: { file: 'config.json' } };
+  // KOSync requires MD5 of the exact UTF-8 password. Runs locally, including
+  // on HTTP reader WebUIs where browser crypto.subtle is unavailable.
+  function passwordKey(password) {
+    const bytes = new TextEncoder().encode(password);
+    const padded = new Uint8Array(Math.ceil((bytes.length + 9) / 64) * 64);
+    padded.set(bytes); padded[bytes.length] = 128;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, bytes.length * 8, true);
+    view.setUint32(padded.length - 4, Math.floor(bytes.length / 0x20000000), true);
+    const shifts = [[7,12,17,22],[5,9,14,20],[4,11,16,23],[6,10,15,21]];
+    const state = [0x67452301,0xefcdab89,0x98badcfe,0x10325476];
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      let [a,b,c,d] = state;
+      for (let i = 0; i < 64; i++) {
+        const round = i >>> 4;
+        const f = round === 0 ? (b & c) | (~b & d) : round === 1 ? (d & b) | (~d & c) : round === 2 ? b ^ c ^ d : c ^ (b | ~d);
+        const word = round === 0 ? i : round === 1 ? (5*i+1)%16 : round === 2 ? (3*i+5)%16 : (7*i)%16;
+        const sum = (a + f + Math.floor(Math.abs(Math.sin(i+1))*0x100000000) + view.getUint32(offset+word*4,true)) | 0;
+        const shift = shifts[round][i%4];
+        [a,b,c,d] = [d,(b+((sum<<shift)|(sum>>>(32-shift))))|0,b,c];
+      }
+      for (const [i,value] of [a,b,c,d].entries()) state[i] = (state[i]+value)|0;
+    }
+    return state.map(word => Array.from({length:4},(_,i) => ((word>>>(8*i))&255).toString(16).padStart(2,'0')).join('')).join('');
+  }
   function buildConfig(input) {
     let server;
     try { server = new URL(String(input.server).trim()); } catch { throw new Error('Enter a valid sync server URL.'); }
     if (!['https:', 'http:'].includes(server.protocol) || server.username || server.password || server.search || server.hash) throw new Error('Use an HTTP(S) server URL without credentials, query, or fragment.');
     const base = server.href.replace(/\/+$/, '');
-    const username = String(input.username || '').trim(), auth_key = String(input.auth_key || '').trim().toLowerCase();
+    const username = String(input.username || '').trim(), auth_key = input.password ? passwordKey(String(input.password)) : String(input.auth_key || '').trim().toLowerCase();
     if (!/^[A-Za-z0-9._@+\-]{1,64}$/.test(username)) throw new Error('Enter your sync username.');
-    if (!/^[a-f0-9]{32}$/.test(auth_key)) throw new Error('Enter the 32-character sync authentication key.');
+    if (!/^[a-f0-9]{32}$/.test(auth_key)) throw new Error('Enter your sync password.');
     const width = Number(input.width), height = Number(input.height);
     if (![width, height].every(n => Number.isInteger(n) && n >= 240 && n <= 1600) || width * height > 2000000) throw new Error('Use dimensions 240–1600 with at most 2,000,000 pixels.');
     if (!['overlay', 'custom'].includes(input.mode) || !['top', 'bottom'].includes(input.placement)) throw new Error('Choose an image mode and panel placement.');
@@ -60,7 +85,14 @@
       return r.text();
     }
     async function connection(cfg) {
-      const r = await api.relay('GET', cfg.server + '/api/v1/stats/sleep-image/status', headers(cfg));
+      let r;
+      try { r = await api.relay('GET', cfg.server + '/api/v1/stats/sleep-image/status', headers(cfg)); }
+      catch (error) {
+        if (error.status === 502 || /relay failed/.test(error.message || '')) {
+          throw new Error('The reader could not reach ' + cfg.server + '/api/v1/stats/sleep-image/status. Check the reader network, DNS, server port and TLS certificate. Use a LAN address reachable from the reader, not localhost. The firmware reports this as a relay error; this status check does not download an image.');
+        }
+        throw error;
+      }
       if (r.status === 401 || r.status === 403) throw new Error('Sync credentials were rejected. Check the username and authentication key.');
       if (r.status !== 200) throw new Error('This sync server needs the Stats Sleeper image endpoint. Update the server and check its URL prefix.');
       let status;

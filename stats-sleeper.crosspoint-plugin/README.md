@@ -6,19 +6,21 @@ Your reading year on your CrossPoint sleep screen: books finished, annual goal p
 
 - CrossPoint firmware with browser plugins, `sleep.enter` event downloads, and transparent PNG sleep overlays. These features may be in development firmware; manual installation alone does not add firmware support.
 - A crosspoint-sync deployment containing the Stats Sleeper image endpoint. The public hosted service works only after its maintainers deploy that change. Older self-hosted servers must also be updated. The plugin reports unsupported servers during the connection test.
-- Your sync username and KOSync authentication key, plus the reader's screen dimensions.
+- Your sync username and password, plus the reader's screen dimensions.
 
 ## Setup
 
 1. Open your reader's WebUI, then Plugins → Stats Sleeper.
-2. Enter the server URL, including any self-hosted prefix, and your sync username/key. The hosted URL is `https://sync.crosspointreader.com`.
+2. Check the server URL, prefilled from the reader’s sync settings for a new setup, including any self-hosted prefix. Enter your sync username/password here because the reader’s existing credentials are protected. The browser calculates the authentication key locally; the plugin never saves your password. The hosted URL is `https://sync.crosspointreader.com`.
 3. Enter the actual screen width and height. The initial 480×800 values are defaults, not hardware detection. Choose your timezone, metrics, and panel position.
 4. Test the connection and preview. Annual goals come from your account's existing goal settings. Without a goal, the goal bar and celebration are hidden.
 5. For Custom wallpapers, optionally upload PNG, JPEG, or WebP artwork. The browser converts and resizes it before storing it on your sync account. The plain-background button removes that account background for all its readers.
 6. Select the explicit replacement checkbox if you already have a sleep image, including a previously generated one. Save, refresh & enable preserves the displaced file as a root-level `stats-sleeper-original-…` backup and activates native sleep refresh. This protects originals you may have manually restored since the previous setup.
 7. Choose the matching sleep mode on the reader. The plugin does not change this setting for you.
 
-The authentication key is the lowercase 32-character MD5 of your sync password, matching the KOSync protocol. Calculate it locally without putting the password in command history, for example:
+On reopening setup, leave the password blank to reuse the saved key. Entering a password replaces that key when you save.
+
+The authentication key is the lowercase 32-character MD5 of your sync password, matching the KOSync protocol. Setup calculates it for you. To calculate it separately without putting the password in command history, for example:
 
 ```sh
 python3 -c "import getpass,hashlib; print(hashlib.md5(getpass.getpass('Sync password: ').encode()).hexdigest())"
@@ -48,3 +50,9 @@ To stop automatic refresh, uninstall the plugin or replace its `device.json` wit
 Known limitation: if setup fails after staging a downloaded image, a root-level `stats-sleeper-pending-…` image may remain. It is safe to remove that pending image in File Manager after setup has stopped. It is separate from your original-artwork backups.
 
 Browser preview and background upload require browser access to the sync server and its API CORS support. HTTPS pages cannot contact plain HTTP servers in many browsers. Native sleep downloads use the reader's network connection instead. Server redirects are rejected for browser requests; configure the final URL.
+
+## Troubleshooting the reader connection
+
+A relay 502 during Test connection or Save means the reader could not complete its small status request. The firmware's generic “large bodies need /api/fetch” message can also mean a DNS, TCP, TLS, or interrupted-response failure; it does not establish that the response was too large. Images already use `/api/fetch`. Use a sync URL reachable from the reader's Wi-Fi network, with the correct port and any path prefix. `localhost` refers to the reader itself. Browser preview succeeding only verifies the browser's network connection. Reader serial logs distinguish transport errors from the relay's response-size limit.
+
+For self-hosted testing, try the host’s LAN IP instead of a `.local` hostname if the reader reports a relay failure. `.local` resolution depends on mDNS support on the reader and network.

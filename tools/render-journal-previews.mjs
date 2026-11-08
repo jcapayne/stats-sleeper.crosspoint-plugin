@@ -22,8 +22,10 @@ art.text('ONE PAGE AT A TIME',240,166,11,{align:'center',tracking:140});
 const background = PNG.sync.write(art.image);
 writeFileSync(join(output,'sample-artwork.png'),background);
 
-for (const [name,finished] of [['progress',12],['celebration',24]]) {
-  const stats = {year:2026,finished,target:24,currentPercent:42,streak:7};
+for (const [name,finished,target,currentPercent,streak] of [
+  ['progress',12,24,42,7], ['celebration',24,24,42,7], ['reader-sample',4,6,59,2],
+]) {
+  const stats = {year:2026,finished,target,currentPercent,streak};
   const overlay = renderSleepImage(stats,parseSleepOptions({mode:'overlay',preview:'1'}));
   const custom = renderSleepImage(stats,parseSleepOptions({mode:'custom',preview:'1'}));
   writeFileSync(join(output,`${name}-overlay.png`),overlay.bytes);

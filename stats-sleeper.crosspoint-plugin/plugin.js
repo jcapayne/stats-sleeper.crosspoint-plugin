@@ -26,9 +26,9 @@ CrossPoint.registerPlugin(async (container, api) => {
       <h2>Stats Sleeper</h2><p>Your reading year, ready for the next chapter.</p>
       <form>
         <div class="ss-grid">
-          <label>Sync server URL<input name="server" type="url" required placeholder="https://sync.crosspointreader.com"><span class="ss-help">Hosted or self-hosted, including a path prefix.</span></label>
-          <label>Sync username<input name="username" required autocomplete="off" autocapitalize="none"></label>
-          <label>Sync authentication key<input name="auth_key" type="password" required autocomplete="off" spellcheck="false"><span class="ss-help">The 32-character MD5 key used by KOSync. See the installed README for how to calculate it locally.</span></label>
+          <label>Sync server URL<input name="server" type="url" required placeholder="https://sync.crosspointreader.com"><span class="ss-help">Prefilled from the reader’s sync settings when available. You can change it here, including any path prefix.</span></label>
+          <label>Sync username<input name="username" required autocomplete="username" autocapitalize="none"><span class="ss-help">Your existing username and password are protected, so we need to ask for them here.</span></label>
+          <label>Sync password<input name="password" type="password" autocomplete="current-password"><span class="ss-help ss-password-help">Your browser calculates the sync key locally. Only the key is sent and saved; your password is not stored by this plugin.</span></label>
           <label>Sleep image<select name="mode"><option value="overlay">Cover + Transparent overlay</option><option value="custom">Custom wallpaper</option></select></label>
           <label>Screen width<input name="width" type="number" min="240" max="1600" required></label>
           <label>Screen height<input name="height" type="number" min="240" max="1600" required></label>
@@ -57,7 +57,7 @@ CrossPoint.registerPlugin(async (container, api) => {
     </section>`;
   const form = container.querySelector('form'), status = container.querySelector('.ss-status');
   const image = container.querySelector('.ss-preview'), instructions = container.querySelector('.ss-instructions');
-  let previewUrl;
+  let previewUrl, savedKey = '', savedUsername = '';
   const field = name => form.elements.namedItem(name);
   function explain() {
     instructions.textContent = field('mode').value === 'overlay'
@@ -67,11 +67,12 @@ CrossPoint.registerPlugin(async (container, api) => {
   }
   function values() {
     const value = {};
-    for (const name of ['server','username','auth_key','mode','width','height','timezone','placement']) value[name] = field(name).value;
+    for (const name of ['server','username','password','mode','width','height','timezone','placement']) value[name] = field(name).value;
+    value.auth_key = value.username.trim() === savedUsername ? savedKey : '';
     value.metrics = [...form.querySelectorAll('[name=metric]:checked')].map(el => el.value).join(',');
     const cfg = core.buildConfig(value);
     if (cfg.server.startsWith('http:') && !field('allow_http').checked) throw new Error('Confirm the HTTP warning, or use HTTPS.');
-    return value;
+    return cfg;
   }
   async function work(action) {
     for (const button of form.querySelectorAll('button')) button.disabled = true;
@@ -104,6 +105,8 @@ CrossPoint.registerPlugin(async (container, api) => {
   form.addEventListener('submit', event => { event.preventDefault(); work(async () => {
     const cfg = await controller.save(values(), field('replace').checked);
     field('replace').checked = false;
+    savedKey = cfg.auth_key; savedUsername = cfg.username; field('password').value = '';
+    container.querySelector('.ss-password-help').textContent = 'Sync key saved. Leave the password blank to keep it, or enter a new password to replace it.';
     const backups = JSON.parse(cfg.backup_paths);
     status.textContent = 'Image refreshed and automatic sleep refresh enabled. ' + (backups.length ? 'Original artwork backups: ' + backups.join(', ') : '');
     explain();
@@ -122,9 +125,24 @@ CrossPoint.registerPlugin(async (container, api) => {
   const defaults = { server: 'https://sync.crosspointreader.com', username: '', auth_key: '', mode: 'overlay', width: 480, height: 800, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', placement: 'bottom', metrics: core.METRICS.join(',') };
   try {
     const saved = await controller.load();
+    if (!saved?.server) {
+      try {
+        const response = await fetch('/api/settings?keys=koServerUrl', { cache: 'no-store' });
+        if (response.ok) {
+          const settings = await response.json();
+          const value = Array.isArray(settings) && settings.find(item => item.key === 'koServerUrl')?.value;
+          if (typeof value === 'string' && value.trim()) {
+            const url = new URL(value.trim());
+            if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !url.search && !url.hash) defaults.server = value.trim();
+          }
+        }
+      } catch { /* Older firmware or unavailable settings: keep the editable default. */ }
+    }
     const config = { ...defaults, ...saved };
-    for (const name of ['server','username','auth_key','mode','width','height','timezone','placement']) field(name).value = config[name];
+    savedKey = config.auth_key; savedUsername = config.username;
+    for (const name of ['server','username','mode','width','height','timezone','placement']) field(name).value = config[name];
     for (const checkbox of form.querySelectorAll('[name=metric]')) checkbox.checked = config.metrics.split(',').includes(checkbox.value);
+    if (saved?.auth_key) container.querySelector('.ss-password-help').textContent = 'A sync key is already saved. Leave the password blank to keep it, or enter a new password to replace it.';
     status.textContent = saved ? 'Configuration loaded. Save, refresh & enable reapplies automatic refresh after a plugin update.' : 'Enter your sync account and reader resolution, then test the connection.';
   } catch (error) { status.textContent = error.message; }
   explain();

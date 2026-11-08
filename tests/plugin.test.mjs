@@ -135,3 +135,22 @@ test('UTF-8 config encoding round-trips and size limits include backup paths', (
   assert.equal(Buffer.from(core.encodeJson({ title: '読書 café' }), 'base64').toString('utf8'), '{"title":"読書 café"}');
   assert.throws(() => core.encodeConfig({ ...core.buildConfig(input), backup_paths: 'x'.repeat(2100) }), /2048|2 KB/i);
 });
+
+test('passwords produce KOSync MD5 keys locally without being persisted', async () => {
+  const { createHash } = await import('node:crypto');
+  for (const password of ['password', ' abc ', '読書📚café', 'a'.repeat(55), 'a'.repeat(64), 'long'.repeat(80)]) {
+    const cfg = core.buildConfig({ ...input, password });
+    assert.equal(cfg.auth_key, createHash('md5').update(password, 'utf8').digest('hex'));
+    assert.equal('password' in cfg, false);
+  }
+  const cfg = core.buildConfig({ ...input, password: '' });
+  assert.equal(cfg.auth_key, input.auth_key.toLowerCase());
+});
+
+test('relay transport failures identify the reader connection rather than image size', async () => {
+  const controller = core.createController({
+    dir: '/.crosspoint/plugins/stats-sleeper',
+    relay: async () => { throw new Error('/api/relay 502: relay failed; large bodies need /api/fetch'); },
+  });
+  await assert.rejects(controller.connection(input), /reader could not reach.*example.org.*DNS|reader could not reach.*example.org.*network/i);
+});
