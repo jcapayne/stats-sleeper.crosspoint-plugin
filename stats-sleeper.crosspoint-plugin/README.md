@@ -5,7 +5,7 @@ Your reading year on your CrossPoint sleep screen: books finished, annual goal p
 ## Requirements
 
 - CrossPoint firmware with browser plugins, `sleep.enter` event downloads, and transparent PNG sleep overlays. These features may be in development firmware; manual installation alone does not add firmware support.
-- A crosspoint-sync deployment containing the Stats Sleeper image endpoint. The public hosted service works only after its maintainers deploy that change. Older self-hosted servers must also be updated. The plugin reports unsupported servers during the connection test.
+- A crosspoint-sync deployment containing the Stats Sleeper image endpoint, merged upstream in [PR #77](https://github.com/crosspoint-reader/crosspoint-sync/pull/77). The hosted service must deploy that change; self-hosted users must update to upstream `main` containing it or a subsequent release. Use **Test connection** to confirm that your server supports the API; an upstream merge alone does not confirm deployment.
 - Your sync username and password, plus the reader's screen dimensions.
 
 ## Setup
@@ -30,7 +30,7 @@ Treat the resulting key like your password. It is saved in `config.json` on the 
 
 ## Sleep modes
 
-- **Cover + Transparent:** recommended. A compact journal-style bookplate overlays the current cover, with serif type, numeric columns, and a slightly tilted annual-goal seal crossing its border.
+- **Cover + Transparent:** recommended when this sleep setting is available in your firmware. A compact journal-style bookplate overlays the current cover, with serif type, numeric columns, and a slightly tilted annual-goal seal crossing its border.
 - **Transparent:** the same panel overlays the retained screen/page.
 - **Custom:** a full-page journal composition puts uploaded artwork in a frame above the matching bookplate. With no uploaded artwork, it uses an original open-book line illustration. Compact layouts are used for short/landscape screens. It uses the firmware's native four gray shades and, at the configured screen size, bypasses its conversion cache. Browser previews use PNG because the native 2-bit BMP is reader-specific.
 - **Cover + Custom:** firmware shows the generated wallpaper on its custom branch; sleeping from a book shows its cover alone. It does not overlay stats on that cover.

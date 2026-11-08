@@ -4,15 +4,17 @@ A native-plugin sleep-image overlay backed by crosspoint-sync. The sync service 
 
 The plugin supports Cover + Transparent overlays and complete Custom wallpapers. It shows books finished this year, the existing annual goal, goal celebrations, current-book percentage, and reading streaks. See [the installable guide](stats-sleeper.crosspoint-plugin/README.md) for setup, credentials, supported sleep modes, offline behavior, and artwork restoration.
 
-Both modes now use a reading-journal visual treatment: serif typography, fine borders, numeric columns, and a goal seal tilted across the bookplate. Custom includes framed artwork or an original line illustration. The image API parameters are unchanged.
+Both modes now use a reading-journal visual treatment: bold serif typography, high-contrast borders, numeric columns, and a tilted goal seal with a progress ring. Custom includes framed artwork or an original line illustration. The image API parameters are unchanged.
 
 ## Status and installation
 
-Version `0.1.0` is in development; no stable Plugin Hub release has been published. The companion authenticated image API is proposed in [crosspoint-sync PR #77](https://github.com/crosspoint-reader/crosspoint-sync/pull/77). Your hosted or self-hosted sync server must include that API before the plugin can work; setup checks support before enabling refresh.
+Version `0.1.0` is in development; no stable Plugin Hub release has been published. The companion authenticated image API was merged into upstream crosspoint-sync in [PR #77](https://github.com/crosspoint-reader/crosspoint-sync/pull/77). Merging the API does not deploy it: your hosted or self-hosted server must run a version containing that change. Use **Test connection** in plugin setup to confirm support before enabling refresh.
+
+The reader needs firmware with browser plugins, native `sleep.enter` event downloads, and transparent PNG sleep overlays. These features may require development firmware. Cover overlays additionally need the **Cover + Transparent** sleep setting; **Transparent** overlays the retained page, and **Custom** displays the full-page wallpaper. **Cover + Custom** switches between the cover and wallpaper rather than combining them.
 
 For manual reader installation, copy the **contents** of `stats-sleeper.crosspoint-plugin/` to `/.crosspoint/plugins/stats-sleeper/` on the SD card. Open the reader WebUI's Plugins page to configure it. Do not install tests, dependency directories, design docs, or the server worktree.
 
-For a self-hosted server, build/deploy the companion `codex/authenticated-stats-images` server branch using that repository's normal Docker/deployment instructions. Its startup migrations add `0049_sleep_backgrounds.sql`; run the updated code and migrations together. The service uses the pure JavaScript `pngjs` and `opentype.js` runtime dependencies, with bundled licensed fonts. Confirm authenticated `GET /api/v1/stats/sleep-image/status` returns `version: 1`, including your deployment prefix, before enabling the plugin. The branch's `docs/API.md` describes the complete endpoint contract. Existing annual goals require no new goal configuration model.
+For a self-hosted server, update to upstream `main` containing PR #77, or a subsequent release containing it, using the [crosspoint-sync deployment instructions](https://github.com/crosspoint-reader/crosspoint-sync). Its startup migrations add `0049_sleep_backgrounds.sql`; run the updated code and migrations together. The service uses the pure JavaScript `pngjs` and `opentype.js` runtime dependencies, with bundled licensed fonts. Confirm authenticated `GET /api/v1/stats/sleep-image/status` returns `version: 1`, including your deployment prefix, before enabling the plugin. The upstream [API documentation](https://github.com/crosspoint-reader/crosspoint-sync/blob/main/docs/API.md#sleep-image-plugin-support) describes the complete endpoint contract. Existing annual goals require no new goal configuration model.
 
 ## Development
 
